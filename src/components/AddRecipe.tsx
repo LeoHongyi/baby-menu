@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Clock,
@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
+import { recipeDB } from "@/lib/utils";
 
 const AddRecipe = () => {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ const AddRecipe = () => {
     ingredients: "",
     steps: "",
   });
+  const [error, setError] = useState(null);
+  const [db, setDb] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -36,14 +39,90 @@ const AddRecipe = () => {
   const categories = ["早餐", "点心", "正餐"];
   const difficulties = ["简单", "中等", "较难"];
 
+  useEffect(() => {
+    const initDatabase = async () => {
+      try {
+        await recipeDB.init();
+        setDb(recipeDB);
+        console.log("数据库初始化成功");
+      } catch (error) {
+        console.error("数据库初始化失败:", error);
+        setError("数据库初始化失败");
+
+        // 如果初始化失败，尝试重置数据库
+        try {
+          console.log("尝试重置数据库...");
+          await recipeDB.resetDatabase();
+          // setDb(recipeDB);
+          console.log("数据库重置成功");
+        } catch (resetError) {
+          console.error("数据库重置失败:", resetError);
+          // setError("数据库重置失败");
+        }
+      }
+    };
+
+    initDatabase();
+  }, []);
+
+  const validateForm = () => {
+    if (!formData.title) return "请输入食谱名称";
+    if (!formData.ageRange) return "请输入适合年龄";
+    if (!formData.time) return "请输入制作时间";
+    if (!formData.ingredients) return "请输入主要食材";
+    if (!formData.steps) return "请输入制作说明";
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 表单验证
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("提交的数据:", formData);
-    setIsSubmitting(false);
-    navigate("/");
+    setError(null);
+
+    try {
+      if (!db) {
+        throw new Error("数据库未初始化");
+      }
+
+      // 添加食谱到数据库
+      const recipeId = await db.addRecipe(formData);
+
+      // 显示成功消息
+      alert("食谱添加成功！");
+
+      // 返回上一页
+      navigate(-1);
+    } catch (error) {
+      console.error("保存食谱失败:", error);
+      setError("保存食谱失败，请重试");
+      alert("保存失败，请重试");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  if (error) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-gray-100 rounded-lg"
+          >
+            返回
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence>
@@ -73,12 +152,11 @@ const AddRecipe = () => {
             {/* Emoji 选择器 */}
             {/* Emoji 选择器 */}
             <div className="mb-4">
-              <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
+              {/* <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
                 <Notebook className="h-4 w-4 mr-1.5 text-gray-400" />
                 食谱图标
-              </label>
-              <div className="relative">
-                {/* 当前选中的 emoji */}
+              </label> */}
+              {/* <div className="relative">
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.02 }}
@@ -90,7 +168,6 @@ const AddRecipe = () => {
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200" />
                 </motion.button>
 
-                {/* Emoji 选择器弹出层 */}
                 <AnimatePresence>
                   {showEmojiPicker && (
                     <>
@@ -134,7 +211,7 @@ const AddRecipe = () => {
                           />
                         </div>
                       </motion.div>
-                      {/* 点击外部关闭 */}
+
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -145,10 +222,10 @@ const AddRecipe = () => {
                     </>
                   )}
                 </AnimatePresence>
-              </div>
+              </div> */}
             </div>
             {/* 分割线 */}
-            <div className="h-px bg-gray-100 my-6" />
+            {/* <div className="h-px bg-gray-100 my-6" /> */}
             {/* 食谱名称 */}
             <div className="mb-4">
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
