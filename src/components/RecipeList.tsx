@@ -19,7 +19,7 @@ const recipes = [
   {
     id: 1,
     title: "南瓜泥粥",
-    category: "辅食初期",
+    category: "早餐",
     time: "20分钟",
     ageRange: "6-8个月",
     difficulty: "简单",
@@ -32,7 +32,7 @@ const recipes = [
   {
     id: 2,
     title: "苹果泥",
-    category: "辅食初期",
+    category: "中餐",
     time: "10分钟",
     ageRange: "4-6个月",
     difficulty: "简单",
@@ -45,7 +45,7 @@ const recipes = [
   {
     id: 3,
     title: "蛋黄糊",
-    category: "辅食中期",
+    category: "晚餐",
     time: "15分钟",
     ageRange: "7-8个月",
     difficulty: "简单",
@@ -58,7 +58,7 @@ const recipes = [
   {
     id: 4,
     title: "牛肉泥粥",
-    category: "辅食后期",
+    category: "早餐",
     time: "30分钟",
     ageRange: "8-12个月",
     difficulty: "中等",
@@ -71,7 +71,7 @@ const recipes = [
   {
     id: 5,
     title: "水果酸奶",
-    category: "辅食后期",
+    category: "早餐",
     time: "5分钟",
     ageRange: "12个月+",
     difficulty: "简单",
@@ -83,7 +83,7 @@ const recipes = [
   },
 ];
 
-const categories = ["全部", "辅食初期", "辅食中期", "辅食后期"];
+const categories = ["全部", "早餐", "中餐", "晚餐"];
 
 // 骨架屏组件
 
@@ -245,7 +245,7 @@ const RecipeList = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
                   type="text"
-                  placeholder="搜索宝宝食谱..."
+                  placeholder="搜索食谱..."
                   className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

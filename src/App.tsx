@@ -65,7 +65,7 @@ const Layout = ({ children }) => {
               返回
             </button>
           ) : (
-            <h1 className="text-lg font-medium">宝宝食谱</h1>
+            <h1 className="text-lg font-medium">家庭食谱</h1>
           )}
 
           {!isAddPage && !isWeeklyPage && (
