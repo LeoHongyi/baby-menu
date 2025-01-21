@@ -7,7 +7,7 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 
 import RecipeList from "./components/RecipeList";
 import AddRecipe from "./components/AddRecipe"; // Component doesn't exist yet
@@ -68,7 +68,7 @@ const Layout = ({
             {showAdd && (
               <Link
                 to="/add"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-pink-500 text-white"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-pink-500 text-white transition-transform hover:rotate-90 active:rotate-90"
               >
                 <Plus className="h-5 w-5" />
               </Link>
