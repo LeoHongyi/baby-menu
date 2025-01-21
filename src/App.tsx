@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
+import "./App.css";
 
 import RecipeList from "./components/RecipeList";
 import AddRecipe from "./components/AddRecipe"; // Component doesn't exist yet

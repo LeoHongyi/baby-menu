@@ -11,12 +11,15 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 
 const AddRecipe = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
-    category: "辅食初期",
+    category: "早餐",
+    emoji: "🍜",
     time: "",
     ageRange: "",
     difficulty: "简单",
@@ -27,8 +30,10 @@ const AddRecipe = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const isMobile = true;
 
-  const categories = ["辅食初期", "辅食中期", "辅食后期"];
+  const categories = ["早餐", "点心", "正餐"];
   const difficulties = ["简单", "中等", "较难"];
 
   const handleSubmit = async (e) => {
@@ -65,6 +70,85 @@ const AddRecipe = () => {
         </div>
         <div className="pt-14 pb-24 overflow-auto h-full">
           <div className="bg-white rounded-lg p-4">
+            {/* Emoji 选择器 */}
+            {/* Emoji 选择器 */}
+            <div className="mb-4">
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
+                <Notebook className="h-4 w-4 mr-1.5 text-gray-400" />
+                食谱图标
+              </label>
+              <div className="relative">
+                {/* 当前选中的 emoji */}
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="w-full h-20 bg-gray-50 rounded-lg flex items-center justify-center text-4xl relative overflow-hidden group border border-gray-200"
+                >
+                  <span className="text-5xl">{formData.emoji}</span>
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200" />
+                </motion.button>
+
+                {/* Emoji 选择器弹出层 */}
+                <AnimatePresence>
+                  {showEmojiPicker && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute z-50 left-0 right-0 mt-2"
+                      >
+                        <div className="bg-white rounded-lg shadow-xl border border-gray-200">
+                          <div className="p-2 border-b flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">
+                              选择图标
+                            </span>
+                            <button
+                              onClick={() => setShowEmojiPicker(false)}
+                              className="p-1 hover:bg-gray-100 rounded-full"
+                            >
+                              <X className="h-4 w-4 text-gray-400" />
+                            </button>
+                          </div>
+                          <Picker
+                            data={data}
+                            onEmojiSelect={(emoji) => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                emoji: emoji.native,
+                              }));
+                              setShowEmojiPicker(false);
+                            }}
+                            locale="zh"
+                            theme="light"
+                            skinTonePosition="none"
+                            previewPosition="none"
+                            categories={["foods", "fruits"]}
+                            maxFrequentRows={0}
+                            navPosition="bottom"
+                            perLine={8}
+                            emojiSize={28}
+                            emojiButtonSize={38}
+                          />
+                        </div>
+                      </motion.div>
+                      {/* 点击外部关闭 */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-40 bg-black bg-opacity-10"
+                        onClick={() => setShowEmojiPicker(false)}
+                      />
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+            {/* 分割线 */}
+            <div className="h-px bg-gray-100 my-6" />
             {/* 食谱名称 */}
             <div className="mb-4">
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
