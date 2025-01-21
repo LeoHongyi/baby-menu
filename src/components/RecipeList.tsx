@@ -19,7 +19,7 @@ const recipes = [
   {
     id: 1,
     title: "南瓜泥粥",
-    category: "早餐",
+    category: "正餐",
     time: "20分钟",
     ageRange: "6-8个月",
     difficulty: "简单",
@@ -32,7 +32,7 @@ const recipes = [
   {
     id: 2,
     title: "苹果泥",
-    category: "中餐",
+    category: "点心",
     time: "10分钟",
     ageRange: "4-6个月",
     difficulty: "简单",
@@ -45,7 +45,7 @@ const recipes = [
   {
     id: 3,
     title: "蛋黄糊",
-    category: "晚餐",
+    category: "正餐",
     time: "15分钟",
     ageRange: "7-8个月",
     difficulty: "简单",
@@ -83,7 +83,7 @@ const recipes = [
   },
 ];
 
-const categories = ["全部", "早餐", "中餐", "晚餐"];
+const categories = ["全部", "早餐", "点心", "正餐"];
 
 // 骨架屏组件
 
@@ -335,6 +335,7 @@ const RecipeList = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black bg-opacity-50 z-50"
+              onClick={() => setIsFilterOpen(false)} // 添加点击背景关闭
             >
               <motion.div
                 initial={{ y: "100%" }}
@@ -342,6 +343,7 @@ const RecipeList = () => {
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl"
+                onClick={(e) => e.stopPropagation()} // 阻止冒泡，避免点击内容区域时关闭
               >
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-4">
