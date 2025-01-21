@@ -12,12 +12,11 @@ export class RecipeDB {
 
   constructor() {
     this.dbName = "BabyRecipesDB";
-    this.dbVersion = 1; // 增加版本号可以强制更新数据库结构
+    this.dbVersion = 2; // 增加版本号可以强制更新数据库结构
     this.db = null;
   }
 
   async init(): Promise<void> {
-    // 如果已经存在旧的数据库连接，先关闭它
     if (this.db) {
       this.db.close();
       this.db = null;
@@ -44,12 +43,13 @@ export class RecipeDB {
         this.db = (event.target as IDBOpenDBRequest).result;
         console.log("数据库打开成功");
 
-        // 验证存储空间是否存在
-        if (!this.db.objectStoreNames.contains("recipes")) {
+        // 验证所有必需的存储空间是否存在
+        if (
+          !this.db.objectStoreNames.contains("recipes") ||
+          !this.db.objectStoreNames.contains("mealPlans")
+        ) {
           console.error("存储空间不存在，需要升级数据库");
-          // 关闭当前连接
           this.db.close();
-          // 增加版本号重新打开数据库
           this.dbVersion += 1;
           this.init().then(resolve).catch(reject);
           return;
@@ -62,28 +62,27 @@ export class RecipeDB {
         console.log("正在升级/创建数据库...");
         const db = (event.target as IDBOpenDBRequest).result;
 
-        // 如果存储空间已存在，先删除它
+        // 创建或更新 recipes 存储空间
         if (db.objectStoreNames.contains("recipes")) {
           db.deleteObjectStore("recipes");
         }
+        const recipeStore = db.createObjectStore("recipes", {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        recipeStore.createIndex("title", "title", { unique: false });
+        recipeStore.createIndex("category", "category", { unique: false });
+        recipeStore.createIndex("createdAt", "createdAt", { unique: false });
 
-        // 创建新的存储空间
-        try {
-          const store = db.createObjectStore("recipes", {
-            keyPath: "id",
-            autoIncrement: true,
+        // 创建或更新 mealPlans 存储空间
+        if (!db.objectStoreNames.contains("mealPlans")) {
+          const mealPlanStore = db.createObjectStore("mealPlans", {
+            keyPath: "date",
           });
-
-          // 创建索引
-          store.createIndex("title", "title", { unique: false });
-          store.createIndex("category", "category", { unique: false });
-          store.createIndex("createdAt", "createdAt", { unique: false });
-
-          console.log("存储空间创建成功");
-        } catch (error) {
-          console.error("创建存储空间失败:", error);
-          reject(error);
+          mealPlanStore.createIndex("date", "date", { unique: true });
         }
+
+        console.log("所有存储空间创建成功");
       };
     });
   }
@@ -226,6 +225,151 @@ export class RecipeDB {
         };
       } catch (error) {
         console.error("搜索过程发生错误:", error);
+        reject(error);
+      }
+    });
+  }
+
+  // 新增：保存每日食谱计划
+  async saveMealPlan(
+    date: string,
+    meals: {
+      早餐: any[];
+      午餐: any[];
+      晚餐: any[];
+    }
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error("数据库未初始化"));
+        return;
+      }
+
+      try {
+        const transaction = this.db.transaction(["mealPlans"], "readwrite");
+        const store = transaction.objectStore("mealPlans");
+
+        const mealPlan = {
+          date,
+          meals,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const request = store.put(mealPlan);
+
+        request.onsuccess = () => {
+          console.log("食谱计划保存成功");
+          resolve();
+        };
+
+        request.onerror = () => {
+          console.error("保存食谱计划失败:", request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        console.error("保存食谱计划时发生错误:", error);
+        reject(error);
+      }
+    });
+  }
+
+  // 新增：获取指定日期的食谱计划
+  async getMealPlan(date: string): Promise<{
+    早餐: any[];
+    午餐: any[];
+    晚餐: any[];
+  }> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error("数据库未初始化"));
+        return;
+      }
+
+      try {
+        const transaction = this.db.transaction(["mealPlans"], "readonly");
+        const store = transaction.objectStore("mealPlans");
+        const request = store.get(date);
+
+        request.onsuccess = () => {
+          resolve(
+            request.result?.meals || {
+              早餐: [],
+              午餐: [],
+              晚餐: [],
+            }
+          );
+        };
+
+        request.onerror = () => {
+          console.error("获取食谱计划失败:", request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        console.error("获取食谱计划时发生错误:", error);
+        reject(error);
+      }
+    });
+  }
+
+  // 新增：删除指定日期的食谱计划
+  async deleteMealPlan(date: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error("数据库未初始化"));
+        return;
+      }
+
+      try {
+        const transaction = this.db.transaction(["mealPlans"], "readwrite");
+        const store = transaction.objectStore("mealPlans");
+        const request = store.delete(date);
+
+        request.onsuccess = () => {
+          console.log("食谱计划删除成功");
+          resolve();
+        };
+
+        request.onerror = () => {
+          console.error("删除食谱计划失败:", request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        console.error("删除食谱计划时发生错误:", error);
+        reject(error);
+      }
+    });
+  }
+
+  // 新增：获取指定日期范围内的所有食谱计划
+  async getMealPlansInRange(
+    startDate: string,
+    endDate: string
+  ): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error("数据库未初始化"));
+        return;
+      }
+
+      try {
+        const transaction = this.db.transaction(["mealPlans"], "readonly");
+        const store = transaction.objectStore("mealPlans");
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const allPlans = request.result || [];
+          const filteredPlans = allPlans.filter(
+            (plan) => plan.date >= startDate && plan.date <= endDate
+          );
+          resolve(filteredPlans);
+        };
+
+        request.onerror = () => {
+          console.error("获取食谱计划范围失败:", request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        console.error("获取食谱计划范围时发生错误:", error);
         reject(error);
       }
     });

@@ -1,4 +1,3 @@
-// App.js
 import React from "react";
 import {
   BrowserRouter,
@@ -6,13 +5,15 @@ import {
   Route,
   Link,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Book, Calendar } from "lucide-react";
 import "./App.css";
 
 import RecipeList from "./components/RecipeList";
-import AddRecipe from "./components/AddRecipe"; // Component doesn't exist yet
+import AddRecipe from "./components/AddRecipe";
 import WeeklyMealPlanner from "./components/WeeklyMealPlanner";
+import CalendarMenu from "./components/Canlender";
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
         <Route
           path="/"
           element={
-            <Layout showHeader showAdd>
+            <Layout showHeader showAdd showNav>
               <RecipeList />
             </Layout>
           }
@@ -30,8 +31,8 @@ function App() {
         <Route
           path="/weekly"
           element={
-            <Layout showHeader showBack>
-              <WeeklyMealPlanner />
+            <Layout showNav>
+              <CalendarMenu />
             </Layout>
           }
         />
@@ -40,12 +41,44 @@ function App() {
   );
 }
 
+// 底部导航组件
+const BottomNav = () => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div className="flex justify-around items-center h-14">
+        <Link
+          to="/"
+          className={`flex flex-col items-center space-y-1 flex-1 py-2 ${
+            currentPath === "/" ? "text-pink-500" : "text-gray-500"
+          }`}
+        >
+          <Book className="h-5 w-5" />
+          <span className="text-xs">食谱</span>
+        </Link>
+        <Link
+          to="/weekly"
+          className={`flex flex-col items-center space-y-1 flex-1 py-2 ${
+            currentPath === "/weekly" ? "text-pink-500" : "text-gray-500"
+          }`}
+        >
+          <Calendar className="h-5 w-5" />
+          <span className="text-xs">食谱日历</span>
+        </Link>
+      </div>
+    </div>
+  );
+};
+
 // 布局组件
 const Layout = ({
   children,
   showHeader = true,
   showAdd = false,
   showBack = false,
+  showNav = false,
 }) => {
   const navigate = useNavigate();
 
@@ -78,7 +111,11 @@ const Layout = ({
         </div>
       )}
 
-      <div className={showHeader ? "pt-14" : ""}>{children}</div>
+      <div className={`${showHeader ? "pt-14" : ""} ${showNav ? "pb-16" : ""}`}>
+        {children}
+      </div>
+
+      {showNav && <BottomNav />}
     </div>
   );
 };

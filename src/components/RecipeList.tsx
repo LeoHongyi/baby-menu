@@ -146,6 +146,10 @@ const RecipeList = () => {
     };
   }, []);
 
+  const getTodayString = () => {
+    return new Date().toISOString().split("T")[0];
+  };
+
   useEffect(() => {
     const initDatabase = async () => {
       try {
@@ -171,6 +175,22 @@ const RecipeList = () => {
 
     initDatabase();
   }, []);
+
+  useEffect(() => {
+    const loadTodayMeals = async () => {
+      if (!db) return;
+
+      try {
+        const today = getTodayString();
+        const savedMeals = await db.getMealPlan(today);
+        setTodayMeals(savedMeals);
+      } catch (error) {
+        console.error("加载今日食谱计划失败:", error);
+      }
+    };
+
+    loadTodayMeals();
+  }, [db]);
 
   useEffect(() => {
     const searchRecipes = async () => {
@@ -207,18 +227,49 @@ const RecipeList = () => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleAddMeal = (mealTime) => {
+  const handleAddMeal = async (mealTime) => {
     setTodayMeals((prev) => ({
       ...prev,
       [mealTime]: [...(prev[mealTime] || []), selectedRecipe],
     }));
+
+    if (!db) return;
+
+    const newMeals = {
+      ...todayMeals,
+      [mealTime]: [...(todayMeals[mealTime] || []), selectedRecipe],
+    };
+
+    try {
+      const today = getTodayString();
+      await db.saveMealPlan(today, newMeals);
+      setTodayMeals(newMeals);
+    } catch (error) {
+      console.error("保存食谱计划失败:", error);
+      alert("保存失败，请重试");
+    }
   };
 
-  const handleRemoveMeal = (mealTime, index) => {
+  const handleRemoveMeal = async (mealTime, index) => {
     setTodayMeals((prev) => ({
       ...prev,
       [mealTime]: prev[mealTime].filter((_, i) => i !== index),
     }));
+    if (!db) return;
+
+    const newMeals = {
+      ...todayMeals,
+      [mealTime]: todayMeals[mealTime].filter((_, i) => i !== index),
+    };
+
+    try {
+      const today = getTodayString();
+      await db.saveMealPlan(today, newMeals);
+      setTodayMeals(newMeals);
+    } catch (error) {
+      console.error("保存食谱计划失败:", error);
+      alert("删除失败，请重试");
+    }
   };
 
   const RecipeItem = ({ recipe }) => (
@@ -324,9 +375,12 @@ const RecipeList = () => {
     <div className="min-h-screen bg-gray-50">
       <MealPicker
         isOpen={showMealModal}
-        onClose={() => setShowMealModal(false)}
+        onClose={() => {
+          setShowMealModal(false);
+        }}
         selectedRecipe={selectedRecipe}
         onMealSelect={handleAddMeal}
+        onMealRemove={handleRemoveMeal} // 添加这一行
         todayMeals={todayMeals}
       />
 
