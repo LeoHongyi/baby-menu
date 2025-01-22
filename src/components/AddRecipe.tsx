@@ -9,6 +9,7 @@ import {
   HeartPulse,
   AlertCircle,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import data from "@emoji-mart/data";
@@ -38,6 +39,163 @@ const AddRecipe = () => {
 
   const categories = ["早餐", "点心", "正餐"];
   const difficulties = ["简单", "中等", "较难"];
+  const commonIngredients = {
+    主食类: ["米粉", "面条", "大米", "小米", "燕麦", "南瓜", "红薯", "土豆"],
+    蛋奶类: ["鸡蛋", "鸡蛋黄", "牛奶", "酸奶", "奶酪"],
+    肉类: ["鸡肉", "猪肉", "牛肉", "鱼肉", "虾仁"],
+    蔬菜类: ["胡萝卜", "西兰花", "菠菜", "南瓜", "玉米", "豌豆", "青菜"],
+    水果类: ["苹果", "香蕉", "梨", "橙子", "草莓", "蓝莓"],
+    豆类: ["豆腐", "黄豆", "红豆", "毛豆", "豌豆"],
+  };
+
+  const [selectedIngredients, setSelectedIngredients] = useState(new Set());
+  const [showIngredientSelector, setShowIngredientSelector] = useState(false);
+  const [customIngredient, setCustomIngredient] = useState("");
+
+  // 处理食材选择
+  const handleIngredientSelect = (ingredient) => {
+    const newSelected = new Set(selectedIngredients);
+    if (newSelected.has(ingredient)) {
+      newSelected.delete(ingredient);
+    } else {
+      newSelected.add(ingredient);
+    }
+    setSelectedIngredients(newSelected);
+
+    // 更新表单数据
+    const ingredientsList = Array.from(newSelected).join("、");
+    setFormData((prev) => ({
+      ...prev,
+      ingredients: ingredientsList,
+    }));
+  };
+
+  // 添加自定义食材
+  const handleAddCustomIngredient = () => {
+    if (customIngredient.trim()) {
+      const newSelected = new Set(selectedIngredients);
+      newSelected.add(customIngredient.trim());
+      setSelectedIngredients(newSelected);
+
+      // 更新表单数据
+      const ingredientsList = Array.from(newSelected).join("、");
+      setFormData((prev) => ({
+        ...prev,
+        ingredients: ingredientsList,
+      }));
+
+      setCustomIngredient("");
+    }
+  };
+
+  // 修改主要食材部分的渲染
+  const renderIngredientsInput = () => (
+    <div className="mb-4">
+      <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
+        <Carrot className="h-4 w-4 mr-1.5 text-gray-400" />
+        主要食材
+      </label>
+
+      {/* 已选食材展示 */}
+      {selectedIngredients.size > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {Array.from(selectedIngredients).map((ingredient) => (
+            <motion.span
+              key={ingredient}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="inline-flex items-center px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-sm"
+            >
+              {ingredient}
+              <button
+                onClick={() => handleIngredientSelect(ingredient)}
+                className="ml-1.5 hover:text-pink-700"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </motion.span>
+          ))}
+        </div>
+      )}
+
+      {/* 食材选择器开关 */}
+      <motion.button
+        type="button"
+        onClick={() => setShowIngredientSelector(!showIngredientSelector)}
+        className="w-full mb-2 px-4 py-3 border border-gray-200 rounded-lg text-left text-gray-600 flex items-center justify-between"
+        whileTap={{ scale: 0.98 }}
+      >
+        选择常见食材
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${
+            showIngredientSelector ? "rotate-180" : ""
+          }`}
+        />
+      </motion.button>
+
+      {/* 食材选择器 */}
+      <AnimatePresence>
+        {showIngredientSelector && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mb-3"
+          >
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              {Object.entries(commonIngredients).map(([category, items]) => (
+                <div key={category} className="mb-4 last:mb-0">
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">
+                    {category}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {items.map((ingredient) => (
+                      <button
+                        key={ingredient}
+                        onClick={() => handleIngredientSelect(ingredient)}
+                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                          selectedIngredients.has(ingredient)
+                            ? "bg-pink-500 text-white"
+                            : "bg-white text-gray-600 border border-gray-200"
+                        }`}
+                      >
+                        {ingredient}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 自定义食材输入 */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={customIngredient}
+          onChange={(e) => setCustomIngredient(e.target.value)}
+          placeholder="添加其他食材..."
+          className="flex-1 px-4 py-3 border border-gray-200 rounded-lg"
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAddCustomIngredient();
+            }
+          }}
+        />
+        <motion.button
+          type="button"
+          onClick={handleAddCustomIngredient}
+          whileTap={{ scale: 0.95 }}
+          className="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+        >
+          添加
+        </motion.button>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     const initDatabase = async () => {
@@ -349,7 +507,8 @@ const AddRecipe = () => {
             </div>
 
             {/* 主要食材 */}
-            <div className="mb-4">
+            {renderIngredientsInput()}
+            {/* <div className="mb-4">
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
                 <Carrot className="h-4 w-4 mr-1.5 text-gray-400" />
                 主要食材
@@ -366,7 +525,7 @@ const AddRecipe = () => {
                 rows="4"
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg"
               />
-            </div>
+            </div> */}
 
             {/* 制作说明 */}
             <div className="mb-4">
